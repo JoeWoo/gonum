@@ -5,6 +5,7 @@
 package testlapack
 
 import (
+	"fmt"
 	"math"
 	"testing"
 
@@ -20,17 +21,24 @@ type Dlartger interface {
 func DlartgTest(t *testing.T, impl Dlartger) {
 	const tol = 1e-14
 	// safmn2 and safmx2 are copied from native.Dlartg.
+	// safmn2 ~ 2*10^{-146}
 	safmn2 := math.Pow(dlamchB, math.Trunc(math.Log(dlamchS/dlamchE)/math.Log(dlamchB)/2))
+	// safmx2 ~ 5*10^145
 	safmx2 := 1 / safmn2
+	fmt.Println(safmn2, safmx2)
 	rnd := rand.New(rand.NewSource(1))
 	for i := 0; i < 1000; i++ {
+		// Generate randomly huge, tiny, and "normal" input arguments to Dlartg.
 		var f float64
 		var fHuge bool
 		switch rnd.Intn(3) {
 		case 0:
 			// Huge f.
 			fHuge = true
-			f = math.Pow(10, 10-20*rnd.Float64()) * safmx2
+			// scale is in the range (10^{-10}, 10^10].
+			scale := math.Pow(10, 10-20*rnd.Float64())
+			// f is in the range (5*10^135, 5*10^155].
+			f = scale * safmx2
 		case 1:
 			// Tiny f.
 			f = math.Pow(10, 10-20*rnd.Float64()) * safmn2
